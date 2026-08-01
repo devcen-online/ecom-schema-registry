@@ -106,7 +106,7 @@ func report(name string, issues []breaking.Issue) int {
 		if level == "breaking" {
 			fail = true
 		}
-		fmt.Printf("%s [%s] %s: %s\n", name, level, i.Path, i.Message)
+		fmt.Printf("%s\n", issueLine(i))
 	}
 	if fail {
 		fmt.Printf("%s: BREAKING CHANGES DETECTED\n", name)
@@ -114,4 +114,10 @@ func report(name string, issues []breaking.Issue) int {
 	}
 	fmt.Printf("%s: ok\n", name)
 	return exitOK
+}
+
+// issueLine — формат строки замечания, зафиксированный в BDD-032#S-7:
+// "[breaking] $.price: удалено обязательное поле" (без префикса файла).
+func issueLine(i breaking.Issue) string {
+	return fmt.Sprintf("[%s] %s: %s", i.Level, i.Path, i.Message)
 }
