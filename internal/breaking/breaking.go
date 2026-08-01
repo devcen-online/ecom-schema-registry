@@ -26,6 +26,7 @@ type Prop struct {
 	Enum    []any    `json:"enum,omitempty"`
 	Minimum *float64 `json:"minimum,omitempty"`
 	Maximum *float64 `json:"maximum,omitempty"`
+	Items   *Schema  `json:"items,omitempty"`
 }
 
 type Issue struct {
@@ -114,9 +115,26 @@ func diffSchema(path string, oldS, newS *Schema) []Issue {
 		if oldP.Maximum != nil && newP.Maximum != nil && *newP.Maximum < *oldP.Maximum {
 			issues = append(issues, Issue{"breaking", path + "." + name, "maximum уменьшен: " + fmtF(*oldP.Maximum) + " -> " + fmtF(*newP.Maximum)})
 		}
+		if s := diffItems(path+"."+name, oldP.Items, newP.Items); len(s) > 0 {
+			issues = append(issues, s...)
+		}
 	}
 	// Добавленные необязательные поля — не breaking (совместимо).
+	if s := diffItems(path, oldS.Items, newS.Items); len(s) > 0 {
+		issues = append(issues, s...)
+	}
 	return issues
+}
+
+// diffItems рекурсивно сравнивает элементы массивов (items).
+func diffItems(path string, oldI, newI *Schema) []Issue {
+	if oldI == nil && newI == nil {
+		return nil
+	}
+	if oldI == nil || newI == nil {
+		return []Issue{{"breaking", path + ".items", "добавлен или удалён массив (items)"}}
+	}
+	return diffSchema(path+".items", oldI, newI)
 }
 
 func diffEnum(path string, oldE, newE []any) []Issue {

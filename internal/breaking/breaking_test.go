@@ -97,6 +97,43 @@ func TestMinimumRaised(t *testing.T) {
 	}
 }
 
+func TestItemsTypeChange(t *testing.T) {
+	oldS := offerSchemaV1()
+	newS := offerSchemaV1()
+	oldS.Properties["seller_ids"] = Prop{Type: "array", Items: &Schema{Type: "string"}}
+	newS.Properties["seller_ids"] = Prop{Type: "array", Items: &Schema{Type: "integer"}}
+
+	issues, _ := Check(mustMarshal(oldS), mustMarshal(newS))
+	if !hasBreaking(issues, "seller_ids.items") {
+		t.Fatalf("изменение типа элемента массива должно быть breaking: %v", issues)
+	}
+}
+
+func TestItemsRemoved(t *testing.T) {
+	oldS := offerSchemaV1()
+	newS := offerSchemaV1()
+	oldS.Properties["seller_ids"] = Prop{Type: "array", Items: &Schema{Type: "string"}}
+	newS.Properties["seller_ids"] = Prop{Type: "array"}
+
+	issues, _ := Check(mustMarshal(oldS), mustMarshal(newS))
+	if !hasBreaking(issues, "seller_ids.items") {
+		t.Fatalf("удаление items должно быть breaking: %v", issues)
+	}
+}
+
+func TestItemsOptionalAdditionCompatible(t *testing.T) {
+	oldS := offerSchemaV1()
+	newS := offerSchemaV1()
+	newS.Properties["tags"] = Prop{Type: "array", Items: &Schema{Type: "string"}}
+
+	issues, _ := Check(mustMarshal(oldS), mustMarshal(newS))
+	for _, i := range issues {
+		if i.Level == "breaking" {
+			t.Fatalf("добавление опционального массива не должно быть breaking: %v", issues)
+		}
+	}
+}
+
 func mustMarshal(m any) []byte {
 	b, err := json.Marshal(m)
 	if err != nil {
