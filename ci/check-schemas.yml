@@ -1,0 +1,34 @@
+# Проверка обратной совместимости схем событий (FR-003).
+#
+# ВАЖНО: токен CI не имеет workflow-скоупа, поэтому файл живёт в ci/.
+# При наличии workflow-скоупа перенесите его в .github/workflows/.
+name: check-schemas
+
+on:
+  pull_request:
+    paths:
+      - "schemas/**"
+
+jobs:
+  breaking-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - name: Build
+        run: go build ./...
+      - name: Unit tests
+        run: go test ./...
+      - name: Validate schemas
+        run: go run ./cmd/breaking-check schemas/
+      - name: Breaking check vs origin/main
+        run: |
+          for f in $(git diff --name-only origin/main...HEAD -- schemas/); do
+            old=$(git show "origin/main:$f" 2>/dev/null) || continue
+            echo "$old" > /tmp/old.json
+            go run ./cmd/breaking-check /tmp/old.json "$f"
+          done

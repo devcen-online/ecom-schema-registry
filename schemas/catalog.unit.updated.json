@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "catalog.unit.updated",
+  "title": "Unit Updated",
+  "description": "Событие обновления unit (тенанта/продавца) — статусы, привязки",
+  "type": "object",
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "aggregate_id": { "type": "string" },
+    "aggregate_version": { "type": "integer", "minimum": 1 },
+    "unit_id": { "type": "string" },
+    "status": { "type": "string", "enum": ["active", "suspended", "blocked"] },
+    "seller_ids": { "type": "array", "items": { "type": "string" } }
+  },
+  "required": ["event_id", "aggregate_id", "aggregate_version", "unit_id", "status"]
+}

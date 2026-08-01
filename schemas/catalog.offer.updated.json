@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "catalog.offer.updated",
+  "title": "Offer Updated",
+  "description": "Событие обновления оффера каталога (PIM → Offers/Search projection)",
+  "type": "object",
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "aggregate_id": { "type": "string" },
+    "aggregate_version": { "type": "integer", "minimum": 1 },
+    "offer_id": { "type": "integer" },
+    "product_id": { "type": "integer" },
+    "unit_id": { "type": "string" },
+    "seller_id": { "type": "string" },
+    "name": { "type": "string" },
+    "price": { "type": "integer", "minimum": 0 },
+    "stock": { "type": "integer", "minimum": 0 },
+    "category_id": { "type": "integer" }
+  },
+  "required": ["event_id", "aggregate_id", "aggregate_version", "offer_id", "product_id", "unit_id", "price", "category_id"]
+}

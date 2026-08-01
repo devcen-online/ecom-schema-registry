@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "catalog.offer.price_changed",
+  "title": "Offer Price Changed",
+  "description": "Событие изменения цены оффера",
+  "type": "object",
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "aggregate_id": { "type": "string" },
+    "aggregate_version": { "type": "integer", "minimum": 1 },
+    "offer_id": { "type": "integer" },
+    "old_price": { "type": "integer", "minimum": 0 },
+    "new_price": { "type": "integer", "minimum": 0 }
+  },
+  "required": ["event_id", "aggregate_id", "aggregate_version", "offer_id", "old_price", "new_price"]
+}
