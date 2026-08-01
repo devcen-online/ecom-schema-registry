@@ -1,5 +1,5 @@
 // Package breaking проверяет обратную совместимость JSON Schema
-// (Protobuf/JSON Schema registry, FR-003).
+// (Protobuf/JSON Schema registry, FR-004).
 //
 // Критерии breaking (упрощённая модель, достаточная для registry):
 //   - удалено обязательное поле (required без default) — breaking;

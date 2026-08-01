@@ -1,7 +1,7 @@
 # ecom-schema-registry
 
 Registry схем событий (Protobuf/JSON Schema) с проверкой обратной
-совместимости — блокирует breaking changes ещё до код-ревью (подзадача #32, FR-003).
+совместимости — блокирует breaking changes ещё до код-ревью (подзадача #32, FR-004).
 
 ## Схемы
 
@@ -47,4 +47,4 @@ go test ./...
 необязательного поля.
 
 ## Ссылки
-- PRD: docs/prd/PRD-032-test-infrastructure.md, FR-003; BDD S-5..S-7.
+- PRD: docs/prd/PRD-032-test-infrastructure.md, FR-004; BDD S-6..S-7.

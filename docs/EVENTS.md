@@ -30,11 +30,14 @@ related_api: schemas/*.json
 
 ## 2. Каталог событий
 
-| Событие | Файл схемы | Продюсер | Консьюмеры | Триггер |
+| Событие ($id) | Файл схемы | Продюсер | Консьюмеры | Триггер |
 |---------|------------|----------|------------|---------|
-| `catalog.offer.updated` | `catalog.offer.updated.json` | PIM (владение оффером) | Offers projection, Search projection | создание/изменение оффера (price, stock, name, категория) |
-| `catalog.offer.price_changed` | `catalog.offer.price_changed.json` | PIM | Offers projection, Search projection | изменение цены оффера (`old_price` → `new_price`) |
-| `catalog.unit.updated` | `catalog.unit.updated.json` | PIM (управление тенантами) | Offers projection, Search projection, Identity (продавец) | смена статуса unit (`active/suspended/blocked`), пересвязка продавцов |
+| `catalog.offer.updated.v1` | `catalog.offer.updated.json` | PIM (владение оффером) | Offers projection, Search projection | создание/изменение оффера (price, stock, name, категория) |
+| `catalog.offer.price_changed.v1` | `catalog.offer.price_changed.json` | PIM | Offers projection, Search projection | изменение цены оффера (`old_price` → `new_price`) |
+| `catalog.unit.updated.v1` | `catalog.unit.updated.json` | PIM (управление тенантами) | Offers projection, Search projection, Identity (продавец) | смена статуса unit (`active/suspended/blocked`), пересвязка продавцов |
+
+Файлы схем сохраняют имя без суффикса версии (`catalog.offer.updated.json`),
+версия зафиксирована в `$id` (см. §5).
 
 Домены, чьи события появятся позже (CMS, Marketing и т.п.) — регистрируются в этом
 реестре по мере появления слоёв (PRD-032, Q-4).
@@ -60,14 +63,14 @@ flowchart LR
 
 Проверка `cmd/breaking-check` (реализация `internal/breaking`):
 
-| Изменение схемы | Вердикт |
+| Изменение схемы | Вердикт (фактический вывод `breaking-check`) |
 |-----------------|---------|
-| удалено обязательное поле | breaking (`field removed`) — блокирует PR |
+| удалено обязательное поле | breaking — блокирует PR: `[breaking] $.price: удалено обязательное поле` + `BREAKING CHANGES DETECTED` |
 | добавлено обязательное поле | breaking — блокирует PR |
 | изменён тип поля | breaking — блокирует PR |
 | удалено значение enum / изменён список enum | breaking — блокирует PR |
 | сужен диапазон (minimum увеличен, maximum уменьшен) | breaking — блокирует PR |
-| добавлено опциональное поле | compatible (`additive`) — пропускается |
+| добавлено опциональное поле | compatible (additive) — пропускается: `ok`, exit 0 |
 | удалено опциональное поле | warning — не блокирует |
 
 Exit code: 0 — ок; 1 — найдены breaking-изменения. CI: `ci/check-schemas.yml`

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "catalog.offer.price_changed",
+  "$id": "catalog.offer.price_changed.v1",
   "title": "Offer Price Changed",
   "description": "Событие изменения цены оффера",
   "type": "object",

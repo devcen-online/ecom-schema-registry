@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "catalog.unit.updated",
+  "$id": "catalog.unit.updated.v1",
   "title": "Unit Updated",
   "description": "Событие обновления unit (тенанта/продавца) — статусы, привязки",
   "type": "object",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "catalog.offer.updated",
+  "$id": "catalog.offer.updated.v1",
   "title": "Offer Updated",
   "description": "Событие обновления оффера каталога (PIM → Offers/Search projection)",
   "type": "object",
