@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "catalog.product.updated.v1",
+  "title": "Product Updated",
+  "description": "Событие создания/изменения товара PIM (PIM → Search projection, карточка; FR-004 PRD-034)",
+  "type": "object",
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "aggregate_id": { "type": "string" },
+    "aggregate_version": { "type": "integer", "minimum": 1 },
+    "product_id": { "type": "integer" },
+    "unit_id": { "type": "string" },
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "category_ids": { "type": "array", "items": { "type": "integer" } },
+    "price": { "type": "integer", "minimum": 1 },
+    "status": { "type": "string", "enum": ["draft", "active", "archived"] },
+    "moderation_status": { "type": "string", "enum": ["draft", "pending", "approved", "rejected"] },
+    "deleted": { "type": "boolean" }
+  },
+  "required": ["event_id", "aggregate_id", "aggregate_version", "product_id", "unit_id", "name", "status"]
+}

@@ -1,12 +1,12 @@
 ---
 id: EVENTS-001
 title: "Модель событий платформы (JetStream): конверт, нейминг, продюсеры, консьюмеры, совместимость"
-version: 0.2.0
+version: 0.3.0
 status: draft
 owner: "QA lead"
-related_prd: PRD-032, PRD-033
+related_prd: PRD-032, PRD-033, PRD-034
 related_api: schemas/*.json
-related_erd: ERD-OB-001 (ecom-go-outbox)
+related_erd: ERD-OB-001 (ecom-go-outbox), ERD-PIM-001, ERD-OFFERS-001, ERD-SEARCH-001
 ---
 
 # EVENTS-001 — Модель событий платформы
@@ -15,6 +15,14 @@ related_erd: ERD-OB-001 (ecom-go-outbox)
 > `short-plan.md`; эталон конверта для примитивов outbox/inbox — этап 1, PRD-033).
 > Схемы — `schemas/*.json` (JSON Schema draft 2020-12), совместимость проверяется
 > `cmd/breaking-check` (FR-004, BDD-032#S-6, S-7).
+>
+> **v0.3.0 (2026-08-01):** каталог событий приведён к PRD-034/BDD-034:
+> добавлено `catalog.product.updated.v1` (товар PIM → Search projection, FR-004);
+> продюсер `catalog.offer.*` — сервис ecom-offers (владелец агрегата offer,
+> ADR-001 ecom-pim, решение 1a); enum статусов unit изменён
+> `[active, suspended, blocked]` → `[pending, active, suspended, closed]`
+> (матрица переходов BDD-034 S-6). Изменение продюсеров и enum — breaking до GA
+> (консьюмеры этапа 2 пишутся сразу под новый контракт).
 >
 > **v0.2.0 (2026-08-01):** конверт расширен с 3 полей до полного набора
 > `docs/ensi-go-feasibility.md` (правило 7, строки 94–99) и согласован с
@@ -60,9 +68,10 @@ read model»); дубль `Nats-Msg-Id` отсекается уникальны�
 
 | Событие ($id) | event_type (при публикации) | Файл схемы | Продюсер | Консьюмеры | Триггер |
 |---------|------------|------------|----------|------------|---------|
-| `catalog.offer.updated.v1` | `ecom.catalog.offer.updated.v1` | `catalog.offer.updated.json` | PIM (владение оффером) | Offers projection, Search projection | создание/изменение оффера (price, stock, name, категория) |
-| `catalog.offer.price_changed.v1` | `ecom.catalog.offer.price_changed.v1` | `catalog.offer.price_changed.json` | PIM | Offers projection, Search projection | изменение цены оффера (`old_price` → `new_price`) |
-| `catalog.unit.updated.v1` | `ecom.catalog.unit.updated.v1` | `catalog.unit.updated.json` | PIM (управление тенантами) | Offers projection, Search projection, Identity (продавец) | смена статуса unit (`active/suspended/blocked`), пересвязка продавцов |
+| `catalog.product.updated.v1` | `ecom.catalog.product.updated.v1` | `catalog.product.updated.json` | PIM (ecom-pim, владелец товара) | Search projection; карточка (via PIM offers projection — только поля товара) | создание/изменение товара (name, description, category_ids, price, status, moderation_status, deleted) |
+| `catalog.offer.updated.v1` | `ecom.catalog.offer.updated.v1` | `catalog.offer.updated.json` | Offers (ecom-offers, владелец агрегата offer) | Offers projection (карточка, ecom-pim), Search projection (ecom-search) | создание/изменение оффера (price, stock, name, категория) |
+| `catalog.offer.price_changed.v1` | `ecom.catalog.offer.price_changed.v1` | `catalog.offer.price_changed.json` | Offers (ecom-offers) | Offers projection, Search projection | изменение цены оффера (`old_price` → `new_price`) |
+| `catalog.unit.updated.v1` | `ecom.catalog.unit.updated.v1` | `catalog.unit.updated.json` | PIM (ecom-pim, управление тенантами этап 2; ADR-001) | Offers projection, Search projection, Identity (продавец) | смена статуса unit (`pending/active/suspended/closed` по матрице BDD-034 S-6), пересвязка продавцов |
 
 Файлы схем сохраняют имя без суффикса версии (`catalog.offer.updated.json`),
 версия зафиксирована в `$id` (см. §5); `event_type` формируется при публикации
@@ -75,16 +84,19 @@ read model»); дубль `Nats-Msg-Id` отсекается уникальны�
 
 ```mermaid
 flowchart LR
-  PIM[PIM] -->|catalog.offer.updated| OFF[(Offers projection)]
-  PIM -->|catalog.offer.price_changed| OFF
-  PIM -->|catalog.unit.updated| OFF
-  PIM -->|*| SRCH[(Search projection)]
-  OFF -->|отфильтрованный набор| SRCH
+  PIM[PIM ecom-pim] -->|catalog.product.updated| SRCH[(Search projection ecom-search)]
+  PIM -->|catalog.unit.updated| SRCH
+  PIM -->|catalog.unit.updated| OFF[(Offers: seller_cards ecom-offers)]
+  OFFERS[ecom-offers] -->|catalog.offer.updated| PIMCARD[(Карточка: offer_cards ecom-pim)]
+  OFFERS -->|catalog.offer.price_changed| PIMCARD
+  OFFERS -->|catalog.offer.*| SRCH
 ```
 
-- Offers projection хранит актуальное состояние оффера (по `aggregate_version`);
-- Search projection переиндексируется из Offers + событий `catalog.unit.updated`
-  (статус unit влияет на видимость офферов);
+- Offers projection (карточка товара, `offer_cards` в ecom-pim) хранит актуальное
+  состояние оффера (по `aggregate_version`) — ADR-001 ecom-pim (решение 2a);
+- Search projection (ecom-search, Manticore) переиндексируется из событий
+  PIM/Offers: `catalog.unit.updated` влияет на видимость офферов (INV-6
+  ERD-SEARCH-001);
 - `catalog.offer.price_changed` содержит `old_price`/`new_price` — консьюмер может
   строить ценовые тренды без чтения состояния агрегата.
 

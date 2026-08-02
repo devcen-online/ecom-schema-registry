@@ -6,9 +6,10 @@ Registry схем событий (Protobuf/JSON Schema) с проверкой о
 ## Схемы
 
 `schemas/*.json` — JSON Schema событий:
-- `catalog.offer.updated` — обновление оффера (PIM → Offers/Search projection);
+- `catalog.product.updated` — создание/изменение товара PIM (→ Search projection);
+- `catalog.offer.updated` — обновление оффера (Offers → Offers/Search projection);
 - `catalog.offer.price_changed` — изменение цены оффера;
-- `catalog.unit.updated` — обновление unit/тенанта (статусы, продавцы).
+- `catalog.unit.updated` — обновление unit/тенанта (статусы pending/active/suspended/closed, продавцы).
 
 ## Проверка обратной совместимости
 
