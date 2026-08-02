@@ -16,6 +16,16 @@ related_erd: ERD-OB-001 (ecom-go-outbox), ERD-PIM-001, ERD-OFFERS-001, ERD-SEARC
 > Схемы — `schemas/*.json` (JSON Schema draft 2020-12), совместимость проверяется
 > `cmd/breaking-check` (FR-004, BDD-032#S-6, S-7).
 >
+> **v0.3.1 (2026-08-02):** схемы реестра дополнены обязательными полями конверта
+> по §1 (`event_type`, `schema_version`, `occurred_at`, `producer` + опциональные
+> `correlation_id`, `causation_id`, `traceparent`) — BDD-034 S-14 (dead-letter на
+> `schema_version`) реализуем по контракту. Поля цены переименованы в `price_cents`
+> (`old_price_cents`/`new_price_cents`) с `minimum: 1` — единицы зафиксированы:
+> деньги в событиях — целые копейки. Консьюмеры `catalog.product.updated` —
+> только Search projection (карточка собирается из offer.*, ADR-001 ecom-pim);
+> консьюмер Identity помечен future (этап 3); `seller_ids` — резерв этапа 3.
+> Изменения breaking до GA (потребителей этапа 2 ещё нет).
+>
 > **v0.3.0 (2026-08-01):** каталог событий приведён к PRD-034/BDD-034:
 > добавлено `catalog.product.updated.v1` (товар PIM → Search projection, FR-004);
 > продюсер `catalog.offer.*` — сервис ecom-offers (владелец агрегата offer,
@@ -64,14 +74,27 @@ related_erd: ERD-OB-001 (ecom-go-outbox), ERD-PIM-001, ERD-OFFERS-001, ERD-SEARC
 read model»); дубль `Nats-Msg-Id` отсекается уникальным `inbox_events.event_id`
 (ERD-OB-001, INV-2).
 
+**Поля конверта в схемах реестра (плоская конвенция):** каждая схема
+`schemas/*.json` содержит поля конверта на корне — обязательные
+`event_id, event_type, schema_version, aggregate_id, aggregate_version,
+occurred_at, producer` и опциональные `correlation_id, causation_id, traceparent`;
+доменные поля (содержимое `payload`) лежат рядом (без вложенного объекта).
+Обязательные поля присутствуют в `required` каждой схемы — иначе сценарий
+BDD-034 S-14 (dead-letter на `schema_version`) и инвариант INV-4 ERD-SEARCH-001
+не реализуемы по контракту, а `cmd/breaking-check` не видит изменений конверта.
+
+**Деньги в событиях:** целые копейки — `price_cents`, `old_price_cents`,
+`new_price_cents` (`integer`, `minimum: 1`; 1 = 0.01 руб). Конвертация из рублей
+API (×100) — в слое продюсера при формировании события.
+
 ## 2. Каталог событий
 
 | Событие ($id) | event_type (при публикации) | Файл схемы | Продюсер | Консьюмеры | Триггер |
 |---------|------------|------------|----------|------------|---------|
-| `catalog.product.updated.v1` | `ecom.catalog.product.updated.v1` | `catalog.product.updated.json` | PIM (ecom-pim, владелец товара) | Search projection; карточка (via PIM offers projection — только поля товара) | создание/изменение товара (name, description, category_ids, price, status, moderation_status, deleted) |
-| `catalog.offer.updated.v1` | `ecom.catalog.offer.updated.v1` | `catalog.offer.updated.json` | Offers (ecom-offers, владелец агрегата offer) | Offers projection (карточка, ecom-pim), Search projection (ecom-search) | создание/изменение оффера (price, stock, name, категория) |
-| `catalog.offer.price_changed.v1` | `ecom.catalog.offer.price_changed.v1` | `catalog.offer.price_changed.json` | Offers (ecom-offers) | Offers projection, Search projection | изменение цены оффера (`old_price` → `new_price`) |
-| `catalog.unit.updated.v1` | `ecom.catalog.unit.updated.v1` | `catalog.unit.updated.json` | PIM (ecom-pim, управление тенантами этап 2; ADR-001) | Offers projection, Search projection, Identity (продавец) | смена статуса unit (`pending/active/suspended/closed` по матрице BDD-034 S-6), пересвязка продавцов |
+| `catalog.product.updated.v1` | `ecom.catalog.product.updated.v1` | `catalog.product.updated.json` | PIM (ecom-pim, владелец товара) | Search projection (ecom-search) | создание/изменение товара (name, description, category_ids, price_cents, status, moderation_status, deleted) |
+| `catalog.offer.updated.v1` | `ecom.catalog.offer.updated.v1` | `catalog.offer.updated.json` | Offers (ecom-offers, владелец агрегата offer) | Offers projection (карточка, ecom-pim), Search projection (ecom-search) | создание/изменение оффера (price_cents, stock, name, категория) |
+| `catalog.offer.price_changed.v1` | `ecom.catalog.offer.price_changed.v1` | `catalog.offer.price_changed.json` | Offers (ecom-offers) | Offers projection (карточка, ecom-pim), Search projection (ecom-search) | изменение цены оффера (`old_price_cents` → `new_price_cents`) |
+| `catalog.unit.updated.v1` | `ecom.catalog.unit.updated.v1` | `catalog.unit.updated.json` | PIM (ecom-pim, управление тенантами этап 2; ADR-001) | Offers projection (seller_cards, ecom-offers), Search projection (ecom-search), Identity (продавец) — future, этап 3 (PRD-035) | смена статуса unit (`pending/active/suspended/closed` по матрице BDD-034 S-6); `seller_ids` — резерв этапа 3 (на этапе 2 seller_id = unit_id) |
 
 Файлы схем сохраняют имя без суффикса версии (`catalog.offer.updated.json`),
 версия зафиксирована в `$id` (см. §5); `event_type` формируется при публикации
@@ -97,8 +120,8 @@ flowchart LR
 - Search projection (ecom-search, Manticore) переиндексируется из событий
   PIM/Offers: `catalog.unit.updated` влияет на видимость офферов (INV-6
   ERD-SEARCH-001);
-- `catalog.offer.price_changed` содержит `old_price`/`new_price` — консьюмер может
-  строить ценовые тренды без чтения состояния агрегата.
+- `catalog.offer.price_changed` содержит `old_price_cents`/`new_price_cents` —
+  консьюмер может строить ценовые тренды без чтения состояния агрегата.
 
 ## 4. Правила обратной совместимости (registry, FR-004)
 

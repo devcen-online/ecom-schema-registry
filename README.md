@@ -5,7 +5,10 @@ Registry схем событий (Protobuf/JSON Schema) с проверкой о
 
 ## Схемы
 
-`schemas/*.json` — JSON Schema событий:
+`schemas/*.json` — JSON Schema событий (каждая схема содержит поля конверта
+EVENTS-001 §1: event_id, event_type, schema_version, aggregate_id,
+aggregate_version, occurred_at, producer + опциональные correlation_id,
+causation_id, traceparent; деньги — price_cents, копейки, ≥ 1):
 - `catalog.product.updated` — создание/изменение товара PIM (→ Search projection);
 - `catalog.offer.updated` — обновление оффера (Offers → Offers/Search projection);
 - `catalog.offer.price_changed` — изменение цены оффера;

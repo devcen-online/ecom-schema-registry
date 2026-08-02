@@ -2,15 +2,22 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "catalog.unit.updated.v1",
   "title": "Unit Updated",
-  "description": "Событие обновления unit (тенанта/продавца) — статусы, привязки. Enum статусов приведён к матрице переходов BDD-034 S-6 (pending/active/suspended/closed)",
+  "description": "Событие обновления unit (тенанта/продавца) — статусы, привязки (ecom-pim → Offers/Search projection). Поля конверта EVENTS-001 §1 + payload на корне. Enum статусов — матрица переходов BDD-034 S-6",
   "type": "object",
   "properties": {
     "event_id": { "type": "string", "format": "uuid" },
+    "event_type": { "type": "string", "description": "ecom.catalog.unit.updated.v1 (без env)" },
+    "schema_version": { "type": "integer", "minimum": 1, "description": "Версия схемы события; неизвестная версия → dead-letter (BDD-034 S-14)" },
     "aggregate_id": { "type": "string" },
     "aggregate_version": { "type": "integer", "minimum": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "producer": { "type": "string", "description": "ecom-pim" },
+    "correlation_id": { "type": "string" },
+    "causation_id": { "type": "string" },
+    "traceparent": { "type": "string" },
     "unit_id": { "type": "string" },
     "status": { "type": "string", "enum": ["pending", "active", "suspended", "closed"] },
-    "seller_ids": { "type": "array", "items": { "type": "string" } }
+    "seller_ids": { "type": "array", "items": { "type": "string" }, "description": "Резерв этапа 3 (Identity, PRD-035); на этапе 2 seller_id = unit_id (ADR-001 ecom-pim)" }
   },
-  "required": ["event_id", "aggregate_id", "aggregate_version", "unit_id", "status"]
+  "required": ["event_id", "event_type", "schema_version", "aggregate_id", "aggregate_version", "occurred_at", "producer", "unit_id", "status"]
 }

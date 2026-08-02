@@ -2,15 +2,22 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "catalog.offer.price_changed.v1",
   "title": "Offer Price Changed",
-  "description": "Событие изменения цены оффера",
+  "description": "Событие изменения цены оффера (ecom-offers → Offers/Search projection; FR-004 PRD-034). Поля конверта EVENTS-001 §1 + payload на корне",
   "type": "object",
   "properties": {
     "event_id": { "type": "string", "format": "uuid" },
+    "event_type": { "type": "string", "description": "ecom.catalog.offer.price_changed.v1 (без env)" },
+    "schema_version": { "type": "integer", "minimum": 1, "description": "Версия схемы события; неизвестная версия → dead-letter (BDD-034 S-14)" },
     "aggregate_id": { "type": "string" },
     "aggregate_version": { "type": "integer", "minimum": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "producer": { "type": "string", "description": "ecom-offers" },
+    "correlation_id": { "type": "string" },
+    "causation_id": { "type": "string" },
+    "traceparent": { "type": "string" },
     "offer_id": { "type": "integer" },
-    "old_price": { "type": "integer", "minimum": 0 },
-    "new_price": { "type": "integer", "minimum": 0 }
+    "old_price_cents": { "type": "integer", "minimum": 1, "description": "Прежняя цена в копейках" },
+    "new_price_cents": { "type": "integer", "minimum": 1, "description": "Новая цена в копейках" }
   },
-  "required": ["event_id", "aggregate_id", "aggregate_version", "offer_id", "old_price", "new_price"]
+  "required": ["event_id", "event_type", "schema_version", "aggregate_id", "aggregate_version", "occurred_at", "producer", "offer_id", "old_price_cents", "new_price_cents"]
 }

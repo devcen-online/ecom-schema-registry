@@ -2,21 +2,28 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "catalog.product.updated.v1",
   "title": "Product Updated",
-  "description": "Событие создания/изменения товара PIM (PIM → Search projection, карточка; FR-004 PRD-034)",
+  "description": "Событие создания/изменения товара PIM (ecom-pim → Search projection; FR-004 PRD-034). Поля конверта EVENTS-001 §1 + payload на корне (плоская конвенция реестра)",
   "type": "object",
   "properties": {
     "event_id": { "type": "string", "format": "uuid" },
+    "event_type": { "type": "string", "description": "ecom.catalog.product.updated.v1 (без env)" },
+    "schema_version": { "type": "integer", "minimum": 1, "description": "Версия схемы события; неизвестная версия → dead-letter (BDD-034 S-14)" },
     "aggregate_id": { "type": "string" },
     "aggregate_version": { "type": "integer", "minimum": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "producer": { "type": "string", "description": "ecom-pim" },
+    "correlation_id": { "type": "string" },
+    "causation_id": { "type": "string" },
+    "traceparent": { "type": "string" },
     "product_id": { "type": "integer" },
     "unit_id": { "type": "string" },
     "name": { "type": "string" },
     "description": { "type": "string" },
     "category_ids": { "type": "array", "items": { "type": "integer" } },
-    "price": { "type": "integer", "minimum": 1 },
+    "price_cents": { "type": "integer", "minimum": 1, "description": "Справочная цена в копейках (EVENTS-001 §1); 1 = 0.01 руб" },
     "status": { "type": "string", "enum": ["draft", "active", "archived"] },
     "moderation_status": { "type": "string", "enum": ["draft", "pending", "approved", "rejected"] },
     "deleted": { "type": "boolean" }
   },
-  "required": ["event_id", "aggregate_id", "aggregate_version", "product_id", "unit_id", "name", "status"]
+  "required": ["event_id", "event_type", "schema_version", "aggregate_id", "aggregate_version", "occurred_at", "producer", "product_id", "unit_id", "name", "status"]
 }

@@ -2,20 +2,27 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "catalog.offer.updated.v1",
   "title": "Offer Updated",
-  "description": "Событие обновления оффера каталога (PIM → Offers/Search projection)",
+  "description": "Событие обновления оффера каталога (ecom-offers → Offers/Search projection; FR-004 PRD-034). Поля конверта EVENTS-001 §1 + payload на корне (плоская конвенция реестра)",
   "type": "object",
   "properties": {
     "event_id": { "type": "string", "format": "uuid" },
+    "event_type": { "type": "string", "description": "ecom.catalog.offer.updated.v1 (без env)" },
+    "schema_version": { "type": "integer", "minimum": 1, "description": "Версия схемы события; неизвестная версия → dead-letter (BDD-034 S-14)" },
     "aggregate_id": { "type": "string" },
     "aggregate_version": { "type": "integer", "minimum": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "producer": { "type": "string", "description": "ecom-offers" },
+    "correlation_id": { "type": "string" },
+    "causation_id": { "type": "string" },
+    "traceparent": { "type": "string" },
     "offer_id": { "type": "integer" },
     "product_id": { "type": "integer" },
     "unit_id": { "type": "string" },
     "seller_id": { "type": "string" },
     "name": { "type": "string" },
-    "price": { "type": "integer", "minimum": 0 },
+    "price_cents": { "type": "integer", "minimum": 1, "description": "Цена в копейках (EVENTS-001 §1); 1 = 0.01 руб" },
     "stock": { "type": "integer", "minimum": 0 },
     "category_id": { "type": "integer" }
   },
-  "required": ["event_id", "aggregate_id", "aggregate_version", "offer_id", "product_id", "unit_id", "price", "category_id"]
+  "required": ["event_id", "event_type", "schema_version", "aggregate_id", "aggregate_version", "occurred_at", "producer", "offer_id", "product_id", "unit_id", "price_cents", "category_id"]
 }
